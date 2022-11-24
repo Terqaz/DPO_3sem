@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Заполнение резюме</title>
+
+	<script src="https://unpkg.com/vue@next"></script>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+</head>
+
+
+
+<!-- 2. Сделать форму заполнения резюме для поиска работы.
+
+Пользователь заполняет текстовые поля с данными о себе. Ниже (или правее) на странице располагается шаблон резюме, в который введенные данные подставляются.
+Список полей:
+- профессия
+- город
+- ссылка на фото
+- фио
+- телефон
+- email
+- дата рождения
+- образование
+- желаемая зарплата
+- ключевые навыки
+- о себе
+Резюме должно формироваться на лету с помощью вычисляемых свойств.
+
+Здесь и далее для верстки рекомендуем использовать bootstrap.
+За основу берите внешний вид резюме на hh.ru, но точное соответствие не требуется. -->
+
+
+<body>
+	<div id="app">
+		<div class="d-flex flex-row w-100">
+			<div class="summary-form__wrapper container-fluid w-50 p-3">
+				<form id="summaryForm" class="summary-form flex-column mx-auto rounded-3 overflow-hidden px-2" name="form">
+					<h4 class="mx-auto text-center">Заполните данные о себе</h4>
+					<div class="summary-form__body text-dark d-flex flex-column">
+						<label for="summaryFormProfession">Профессия</label>
+						<input type="text" v-model="summaryFormData.profession" id="summaryFormProfession" class="form-control" placeholder="Название профессии">
+
+						<label for="summaryFormCity">Город проживания</label>
+						<input type="text" id="summaryFormCity" class="form-control" placeholder="Название города">
+
+						<label for="summaryFormAvatarUrl">Ссылка на фото</label>
+						<input type="text" id="summaryFormAvatarUrl" class="form-control" placeholder="http:\\example.site">
+
+						<label for="summaryFormLastName">Фамилия</label>
+						<input type="text" id="summaryFormLastName" class="form-control" placeholder="Иванов">
+
+						<label for="summaryFormFirstName">Имя</label>
+						<input type="text" id="summaryFormFirstName" class="form-control" placeholder="Иван">
+
+						<label for="summaryFormPatronymic">Отчество</label>
+						<input type="text" id="summaryFormPatronymic" class="form-control" placeholder="Иванович">
+
+						<label for="summaryFormPhone">Телефон</label>
+						<input type="text" id="summaryFormPhone" class="form-control" placeholder="+7 012 456 78 99">
+
+						<label for="summaryFormEmail">Email</label>
+						<input type="text" id="summaryFormEmail" class="form-control" placeholder="example@some.site">
+
+						<label for="summaryFormBirthday">Дата рождения</label>
+						<input type="date" id="summaryFormBirthday">
+
+						<label for="">Образование</label>
+						<select name="education" id="summaryFormEducation" class="form-control">
+							<option value="Основное общее"></option>
+							<option value="Среднее общее"></option>
+							<option value="Начальное профессиональное"></option>
+							<option value="Среднее профессиональное"></option>
+							<option value="Бакалавр"></option>
+							<option value="Специалист"></option>
+							<option value="Магистр"></option>
+							<option value="Аспирант"></option>
+						</select>
+
+						<label for="summaryFormDesiredSalary">Желаемая зарплата</label>
+						<input type="number" id="summaryFormDesiredSalary" class="form-control" placeholder="100000">
+
+						<label for="summaryFormKeySkills">Ключевые навыки</label>
+						<textarea id="summaryFormKeySkills" class="form-control" placeholder="Symfony, Vuejs, ..."></textarea>
+
+						<label for="summaryFormAbout">О себе</label>
+						<textarea type="text" id="summaryFormAbout" class="form-control" placeholder="Попытайтесь описать себя"></textarea>
+					</div>
+        		</form>
+			</div>
+			<div class="container-fluid w-50 p-3">
+				<h4 class="mx-auto text-center">Ваше резюме</h5>
+				<img v-if="isValid(summaryFormData.url, constraints().url)" src="summaryFormData.url" alt="Аватар">
+				<h3 v-if="isFullNameValid()">
+					{{fullName}}
+				</h3>
+
+				<h3>О себе</h3>
+				<p v-if="birthday">
+					Дата рождения: {{summaryFormData.birthday}}
+				</p>
+				<p v-if="isValid(summaryFormData.city, constraints().city)">
+					Город проживания: Липецк
+				</p>
+				<p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Illum, autem, nesciunt eius exercitationem dignissimos sapiente ullam adipisci commodi odio magnam, maiores laudantium deserunt est placeat aliquam itaque doloremque illo eligendi?
+				Porro atque unde corrupti explicabo? Fuga consequatur ullam incidunt enim, quia nobis necessitatibus sint possimus animi praesentium aliquid recusandae atque deleniti? Maxime atque iure saepe exercitationem dolorum sint fugit ad!</p>
+				
+				<h3>Профессиональные качества</h3>
+				<p v-if="education">
+					Образование: {{summaryFormData.education}}
+				</p>
+				<p v-if="isValid(summaryFormData.profession, constraints().profession)">
+					Профессия: {{summaryFormData.profession}}
+				</p>
+				<p v-if="isValid(summaryFormData.keySkills, constraints().keySkills)">
+					Ключевые навыки: {{summaryFormData.keySkills}}
+				</p>
+
+				<h3 v-if="isValid(summaryFormData.phone, constraints().phone) || isValid(summaryFormData.email, constraints().email)">
+					Контакты
+				</h3>
+				<p v-if="isValid(summaryFormData.phone, constraints().phone)">
+					Телефон: {{summaryFormData.phone}}
+				</p>
+				<p v-if="isValid(summaryFormData.email, constraints().email)">
+					Email: {{summaryFormData.email}}
+				</p>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous"></script>
+	<script>
+		const vm = Vue.createApp({
+			data() {
+				return {
+					summaryFormData: {
+						profession: '',
+						city: '',
+						avatarUrl: '',
+						lastName: '',
+						firstName: '',
+						patronymic: '',
+						phone: '',
+						email: '',
+						birthday: '',
+						education: '',
+						desiredSalary: '',
+						keySkills: '',
+						about: '',
+					},
+					regexes: {
+						isAlpha: new RegExp('^[A-ЯЁ][а-яё\-]{1,32}$', 'u'),
+						// isAlphaMultiWords: new RegExp('^[A-ЯЁ][а-яё]{1,32}( ([а-яё]{1,32})*$', 'u'),
+						email: new RegExp('^[\dA-Za-z][.-_\dA-Za-z]+[\dA-Za-z]?@([-\dA-Za-z]+\.){1,2}[-A-Za-z]{2,7}$'),
+						// phone: new RegExp('^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$'),
+						url: new RegExp('^https?\:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$')
+					}
+				};
+			},
+			watch: {
+			},
+			computed: {
+				fullName() {
+					let fullName = this.summaryFormData.lastName + ' ' + 
+						this.summaryFormData.lastName;
+					if (this.summaryFormData.patronymic) {
+						fullName += ' ' + this.summaryFormData.patronymic;
+					}
+					return fullName;
+				}
+			},
+			methods: {
+				isValid(value, constraints) {
+					if (!constraints) {
+					    return true;
+					} else if (constraints.required && !value) {
+						return false;
+					} else if (constraints.minLength && value.length < constraints.minLength) {
+					    return false;
+					} else if (constraints.maxLength && value.length > constraints.maxLength) {
+					    return false;
+					} else if (constraints.regex && !constraints.regex.test(value)) {
+					    return false;
+					}
+					return true;
+				},
+
+				isFullNameValid() {
+					return this.isValid(this.summaryFormData.firstName, this.constraints().firstName) &&
+						this.isValid(this.summaryFormData.lastName, this.constraints().lastName) &&
+						this.isValid(this.summaryFormData.patronymic, this.constraints().patronymic);
+				},
+
+				constraints() {
+					return {
+						profession: {
+							required: true,
+							maxLength: 200,
+							regex: this.regexes.isAlphaMultiWords,
+						},
+						city: {
+							required: true,
+						},
+						avatarUrl: {
+							required: false,
+							regex: this.regexes.url
+						},
+						lastName: {
+							required: true,
+							minLength: 2,
+							maxLength: 64,
+							regex: this.regexes.isAlpha
+						},
+						firstName: {
+							required: true,
+							minLength: 2,
+							maxLength: 64,
+							regex: this.regexes.isAlpha
+						},
+						patronymic: {
+							required: false,
+							minLength: 4,
+							maxLength: 64,
+							regex: this.regexes.isAlpha
+						},
+						phone: {
+							required: true,
+							regex: this.regexes.phone
+						},
+						email: {
+							required: false,
+							minLength: 5,
+							maxLength: 128,
+							regex: this.regexes.email
+						},
+						birthday: {
+							required: true,
+						},
+						desiredSalary: {
+							required: false,
+						},
+						keySkills: {
+							required: false,
+							maxLength: 2048,
+						},
+						about: {
+							required: false,
+							minLength: 32,
+							maxLength: 2048,
+						},
+					};
+				}
+			},
+		}).mount('#app')
+	</script>
+
+	<style>
+		.summary-form__body .input-group-text {
+			background: #8E1030;
+			border: none;
+			color: white;
+		}
+
+		.summary-form {
+			max-width: 600px;
+		}
+
+		.summary-form__header {
+			background: #003A6C;
+		}
+
+		.summary-form__header__swap-btn {
+			padding: 0;
+			border: none;
+			font-size: 1.5rem;
+			background: #002D54;
+		}
+
+		.summary-form__body {
+			min-height: 30px;
+		}
+	</style>
+</body>
+</html>
