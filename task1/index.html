@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Перевод единиц</title>
+	<title>Перевод единиц измерения</title>
 
 	<script src="https://unpkg.com/vue@next"></script>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
@@ -11,10 +11,14 @@
 
 <body>
 	<div id="app">
+		<!-- Форма -->
 		<div class="conversion-form__wrapper container-fluid mt-3">
 			<form id="conversionFormBody" class="conversion-form flex-column mx-auto rounded-3 overflow-hidden" name="form">
 
+				<!-- Заголовок-->
 				<div class="conversion-form__header text-dark p-4 text-white">
+
+					<!-- Выбор величины -->
 					<div class="input-group mb-3">
 						<span class="input-group-text"> Перевод величины </span>
 						<select v-model="quantityValue" class="form-select">
@@ -22,16 +26,21 @@
 						</select>
 					</div>
 					
+					<!-- Выбор измерений -->
 					<div v-if="quantityValue" class="d-flex flex-row">
+
+						<!-- Выбор входной меры -->
 						<div class="input-group">
 							<span class="input-group-text"> из </span>
 							<select v-model="fromMeasureValue" class="form-select">
 								<option v-for="measure in selectedMeasures" v-bind:value="measure.value">{{ measure.name }}</option>
 							</select>
 						</div>
+						<!-- Поменять меры местами -->
 						<button @click="swapMeasures" class="conversion-form__header__swap-btn btn text-white h-100 mx-2">
 							<->
 						</button>
+						<!-- Выбор выходной меры -->
 						<div class="input-group">
 							<span class="input-group-text"> в </span>
 							<select v-model="toMeasureValue" class="form-select">
@@ -41,12 +50,15 @@
 					</div>
 				</div>
 
+				<!-- Получение значения перевода величин -->
 				<div class="conversion-form__body text-dark p-4 text-white  d-flex">
 					<div v-if="fromMeasureValue && toMeasureValue" class="input-group">
+						<!-- Входное значение -->
 						<input type="number" v-model="fromValue" class="form-control">
 						<span class="input-group-text">{{ selectedMeasures[fromMeasureValue].symbol }}</span>
 
-						<input type="number" class="form-control" v-bind:value="toValue">
+						<!-- Выходное значение -->
+						<input type="number" class="form-control" v-bind:value="toValue" disabled>
 						<span class="input-group-text">{{ selectedMeasures[toMeasureValue].symbol }}</span>
 					</div>
 				</div>
@@ -59,10 +71,12 @@
 		const vm = Vue.createApp({
 			data() {
 				return {
+					// Измерения
 					quantities: [
 						{value:'length', 	  name:'Расстояние'},
 						{value:'temperature', name:'Температура'}
 					],
+					// Величины измерений
 					measures: {
 						length: {
 							meter: {
@@ -114,17 +128,24 @@
 							}
 						}
 					},
+					// Выбранная величина
 					quantityValue: '',
 
+					// Выбранное входная меря
 					fromMeasureValue: '',
+					// Выбранное выходная мера
 					toMeasureValue: '',
 
+					// Введенное значение входной меры
 					fromValue: 0
 				}
 			},
-			watch: {
-			},
 			methods: {
+				/** 
+				 * Меняет местами выбранные величины перевода и обнуляет значение входной меры
+				 * Аргументы:
+				 * event - событие DOM
+				 */
 				swapMeasures(event) {
 					event.preventDefault();
 					[this.fromMeasureValue, this.toMeasureValue] = [this.toMeasureValue, this.fromMeasureValue];
@@ -132,21 +153,32 @@
 				}
 			},
 			computed: {
+				/** 
+				 * Обновляет выбранные величины перевода
+				 * Аргументы:
+				 * event - событие DOM
+				 */
 				selectedMeasures() {
 					this.fromMeasureValue = '';
 					this.toMeasureValue = '';
 					return this.measures[this.quantityValue];
 				},
+
+				/** 
+				 * Вычисляет значение выходной меры. Для каждой меры не из СИ указаны методы перевода в величину в СИ и из нее.
+				 * Сначала при необходимости происходит перевод из входной меры в СИ, а затем при необходимости перевод из СИ в выходную меру.
+				 * Returns: float - значение выходного измерения
+				 */
 				toValue() {
 					let measureFrom = this.measures[this.quantityValue][this.fromMeasureValue];
 					let measureTo = this.measures[this.quantityValue][this.toMeasureValue];
 					
 					let y = this.fromValue;
-					// Если начальная единица измерения не из СИ
+					// Если входная единица измерения не из СИ
 					if (measureFrom.toSi) {
 						y = measureFrom.toSi(y);
 					}
-					// Если конечная единица измерения не из СИ
+					// Если выходная единица измерения не из СИ
 					if (measureTo.fromSi) {
 						y = measureTo.fromSi(y);
 					}
